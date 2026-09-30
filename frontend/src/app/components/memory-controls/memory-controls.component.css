@@ -1,0 +1,39 @@
+:host { display: block; }
+
+.memory-card {
+  display: flex; flex-direction: column; gap: 14px; padding: 22px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+}
+
+.memory-head { display: flex; align-items: center; gap: 12px; }
+.memory-head h2 { margin-top: 2px; font-size: 18px; letter-spacing: -0.02em; }
+.memory-icon {
+  flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.memory-icon .icon { width: 20px; height: 20px; }
+
+.memory-note { font-size: 13.5px; color: var(--ink-2); line-height: 1.55; }
+
+.memory-documents { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; max-height: 220px; overflow-y: auto; }
+.memory-documents li {
+  display: grid; gap: 2px; padding: 10px 14px; border-radius: 10px;
+  background: var(--surface-2); border: 1px solid var(--line);
+}
+.memory-documents strong { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memory-documents span { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+
+.memory-empty {
+  padding: 12px 14px; border-radius: 10px; border: 1px dashed var(--line-strong);
+  font-size: 13px; color: var(--ink-3); text-align: center;
+}
+
+.memory-status {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 600;
+}
+.memory-status.cleared { background: var(--ok-soft); border: 1px solid #bfe6d0; color: #0b7a43; }
+.memory-status span { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+
+.danger-button { width: 100%; }

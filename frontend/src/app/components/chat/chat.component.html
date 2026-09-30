@@ -1,0 +1,142 @@
+<section class="chat-card">
+  <header class="chat-heading">
+    <div>
+      <div class="section-kicker">
+        <span class="kicker-dot"></span>
+        Evidence chat
+      </div>
+      <h2>Ask your document</h2>
+      <p>
+        Answers are generated from retrieved PDF evidence. Sources appear with every
+        grounded response.
+      </p>
+    </div>
+
+    <div class="chat-status" [class.ready]="state.application().documentAvailable">
+      <span class="chat-status-dot"></span>
+      {{ state.application().documentAvailable ? 'Ready for questions' : 'Waiting for a PDF' }}
+    </div>
+  </header>
+
+  <div #messageViewport class="message-viewport" aria-live="polite">
+    @if (state.conversation().messages.length === 0) {
+      <div class="empty-chat">
+        <div class="empty-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/>
+          </svg>
+        </div>
+
+        <h3>Ask something the PDF can answer.</h3>
+        <p>
+          Once the document is indexed, ask precise questions. The backend retrieves
+          relevant chunks, filters them for relevance, and grounds the response.
+        </p>
+
+        <div class="suggestion-grid">
+          <span>Summarize the document</span>
+          <span>What are the key points?</span>
+          <span>Find a specific fact</span>
+        </div>
+      </div>
+    }
+
+    @for (message of state.conversation().messages; track message.id) {
+      <article
+        class="message-row"
+        [class.user-row]="message.role === 'user'"
+        [class.assistant-row]="message.role === 'assistant'"
+      >
+        <div class="avatar" [class.user-avatar]="message.role === 'user'" aria-hidden="true">
+          @if (message.role === 'user') {
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M20 21a8 8 0 0 0-16 0M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/>
+            </svg>
+          } @else {
+            <svg class="icon" viewBox="0 0 24 24">
+              <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>
+            </svg>
+          }
+        </div>
+
+        <div
+          class="message-bubble"
+          [class.user-bubble]="message.role === 'user'"
+          [class.error-bubble]="message.status === 'error'"
+        >
+          <div class="message-meta">
+            <span>{{ message.role === 'user' ? 'You' : 'RAG Assistant' }}</span>
+            <time [attr.datetime]="message.timestamp">
+              {{ message.timestamp | date:'shortTime' }}
+            </time>
+          </div>
+
+          @if (message.status === 'generating') {
+            <div class="generating-state">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <em>Retrieving and generating...</em>
+            </div>
+          } @else {
+            <p>{{ message.content }}</p>
+          }
+
+          @if (message.role === 'assistant' && message.sources.length > 0) {
+            <app-source-list [sources]="message.sources"></app-source-list>
+          }
+        </div>
+      </article>
+    }
+  </div>
+
+  <div class="composer-shell">
+    @if (validationMessage) {
+      <div class="validation-banner" role="alert">
+        <span>!</span>
+        {{ validationMessage }}
+      </div>
+    }
+
+    <form class="composer" (submit)="$event.preventDefault(); submit()">
+      <div class="composer-box" [class.disabled]="state.isBusy() || !state.application().documentAvailable">
+        <textarea
+          rows="4"
+          [value]="question"
+          [disabled]="state.isBusy() || !state.application().documentAvailable"
+          [attr.maxlength]="environmentMaxQuestionLength"
+          placeholder="Ask a question about the indexed PDF..."
+          (input)="handleInput($event)"
+        ></textarea>
+
+        <div class="composer-bottom">
+          <div class="composer-hint">
+            {{ question.length }}/{{ environmentMaxQuestionLength }} characters
+          </div>
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="!canSubmit"
+          >
+            @if (state.isBusy()) {
+              <span class="button-spinner"></span>
+              <span>Processing</span>
+            } @else {
+              <span>Ask document</span>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6"/>
+              </svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      @if (!state.application().documentAvailable && !state.isBusy()) {
+        <p class="composer-lock">
+          Index a PDF first to unlock document questions.
+        </p>
+      }
+    </form>
+  </div>
+</section>

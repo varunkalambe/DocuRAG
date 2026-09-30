@@ -1,0 +1,55 @@
+<section class="memory-card">
+  <div class="memory-head">
+    <span class="memory-icon" aria-hidden="true">
+      <svg class="icon" viewBox="0 0 24 24">
+        <path d="M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Zm0 0v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>
+      </svg>
+    </span>
+    <div>
+      <span class="section-kicker">Semantic memory</span>
+      <h2>Workspace memory</h2>
+    </div>
+  </div>
+
+  <p class="memory-note">
+    Clear the current Chroma collection and reset the visible document conversation
+    at the same time.
+  </p>
+
+  @if (state.indexedDocuments().length > 0) {
+    <ul class="memory-documents" aria-label="Documents stored in semantic memory">
+      @for (item of state.indexedDocuments(); track item.document_id) {
+        <li>
+          <strong [title]="item.filename">{{ item.filename }}</strong>
+          <span>{{ item.page_count }} pages · {{ item.chunk_count }} chunks</span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="memory-empty">No documents are stored yet.</p>
+  }
+
+  @if (state.application().memoryResetState === 'cleared') {
+    <div class="memory-status cleared">
+      <span></span>
+      Semantic memory is clear.
+    </div>
+  }
+
+  <button
+    type="button"
+    class="danger-button"
+    [disabled]="state.isBusy() || state.application().memoryResetState === 'clearing'"
+    (click)="reset()"
+  >
+    @if (state.application().memoryResetState === 'clearing') {
+      <span class="button-spinner"></span>
+      <span>Clearing…</span>
+    } @else {
+      <span>Clear memory</span>
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 7h14M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"/>
+      </svg>
+    }
+  </button>
+</section>

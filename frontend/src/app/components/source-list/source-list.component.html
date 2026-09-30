@@ -1,0 +1,39 @@
+<section class="source-block" aria-label="Retrieved sources">
+  <div class="source-heading">
+    <div>
+      <span class="source-kicker">Evidence</span>
+      <strong>Retrieved sources</strong>
+    </div>
+    <span class="source-count">{{ sources().length }} chunks</span>
+  </div>
+
+  <div class="source-list">
+    @for (source of sources(); track source.source_id) {
+      <article class="source-card">
+        <div class="rank-badge">#{{ source.rank }}</div>
+
+        <div class="source-main">
+          <div class="source-topline">
+            <strong [title]="source.filename">{{ source.filename }}</strong>
+            <span>distance {{ source.distance | number:'1.3-5' }}</span>
+          </div>
+
+          <div class="source-meta">
+            <span class="meta-chip">
+              <b>Pages</b>
+              {{ source.start_page }}–{{ source.end_page }}
+            </span>
+            <span class="meta-chip">
+              <b>Sequence</b>
+              {{ source.sequence }}
+            </span>
+            <span class="meta-chip chunk-chip" [title]="source.chunk_id">
+              <b>Chunk</b>
+              {{ source.chunk_id }}
+            </span>
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+</section>

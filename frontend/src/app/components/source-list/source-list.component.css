@@ -1,0 +1,34 @@
+:host { display: block; }
+
+.source-block { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+.source-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+.source-kicker { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.source-heading strong { font-size: 13.5px; color: var(--ink); }
+.source-count {
+  padding: 3px 10px; border-radius: 999px; background: var(--accent-soft);
+  font-size: 12px; font-weight: 600; color: var(--accent-strong);
+}
+
+.source-list { display: grid; gap: 8px; }
+.source-card {
+  display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px;
+  border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
+}
+.rank-badge {
+  flex: none; padding: 3px 8px; border-radius: 6px; background: var(--accent); color: #fff;
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+}
+.source-main { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.source-topline { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.source-topline strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.source-topline span { flex: none; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); }
+
+.source-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.meta-chip {
+  display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 2px 8px;
+  border-radius: 6px; background: #fff; border: 1px solid var(--line);
+  font-size: 12px; color: var(--ink-2);
+}
+.meta-chip b { font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-3); }
+.chunk-chip { font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

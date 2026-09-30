@@ -1,0 +1,255 @@
+<section class="upload-card">
+  <div class="card-heading">
+    <div>
+      <div class="section-kicker">
+        <span class="kicker-dot"></span>
+        Document ingestion
+      </div>
+      <h2>Add your PDF</h2>
+      <p>
+        Select a text-based PDF. The browser validates the file first, then FastAPI
+        performs extraction, chunking, embeddings, and indexing.
+      </p>
+    </div>
+
+    <div class="file-limit">10 MB max</div>
+  </div>
+
+  <input
+    #fileInput
+    class="hidden-input"
+    type="file"
+    accept="application/pdf,.pdf"
+    (change)="onFileInput($event)"
+  />
+
+  <div
+    class="drop-zone"
+    [class.drag-over]="isDragOver"
+    [class.has-file]="selectedFile"
+    (dragenter)="onDragEnter($event)"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    @if (!selectedFile) {
+      <div class="drop-content">
+        <div class="drop-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M12 16V4m0 0L7 9m5-5 5 5M5 16.5v1.2A2.3 2.3 0 0 0 7.3 20h9.4a2.3 2.3 0 0 0 2.3-2.3v-1.2"/>
+          </svg>
+        </div>
+
+        <h3>Drop your PDF here</h3>
+        <p>or browse files from this device</p>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="openFilePicker()"
+        >
+          <span>Select PDF</span>
+        </button>
+      </div>
+    } @else {
+      <div class="selected-file">
+        <div class="file-symbol" aria-hidden="true">PDF</div>
+
+        <div class="file-copy">
+          <span class="file-status">Selected and ready</span>
+          <strong [title]="state.document().filename ?? ''">
+            {{ state.document().filename }}
+          </strong>
+          <small>{{ state.document().sizeBytes | number }} bytes · PDF document</small>
+        </div>
+
+        <button
+          type="button"
+          class="round-action"
+          [disabled]="state.isBusy()"
+          (click)="openFilePicker()"
+          aria-label="Reselect PDF"
+          title="Reselect PDF"
+        >
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M4 12a8 8 0 0 0 13.7 5.7L20 15.4M20 12a8 8 0 0 0-13.7-5.7L4 8.6M4 8.6V4m0 4.6h4.6M20 15.4V20m0-4.6h-4.6"/>
+          </svg>
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (selectedFile) {
+    <div class="ingestion-summary">
+      <div>
+        <span class="summary-label">Current request</span>
+        <strong>{{ state.request().message }}</strong>
+      </div>
+
+      @if (state.request().phase === 'uploading' || state.request().uploadProgress > 0) {
+        <span class="progress-label">{{ state.request().uploadProgress }}%</span>
+      } @else {
+        <span class="phase-pill" [class.complete]="state.request().phase === 'completed'">
+          {{ state.request().phase }}
+        </span>
+      }
+    </div>
+  }
+
+  @if (state.request().phase === 'uploading') {
+    <div class="progress-shell">
+      <div class="progress-track">
+        <div
+          class="progress-value"
+          [style.width.%]="state.request().uploadProgress"
+        ></div>
+      </div>
+      <div class="progress-meta">
+        <span>Browser → FastAPI</span>
+        <span>{{ state.request().uploadProgress }}%</span>
+      </div>
+    </div>
+  }
+
+  @if (state.request().phase === 'processing') {
+    <div class="processing-card">
+      <span class="button-spinner"></span>
+      <div>
+        <strong>FastAPI is processing your document</strong>
+        <p>
+          Extraction → chunking → embeddings → Chroma indexing.
+          The backend response is the authoritative completion signal.
+        </p>
+      </div>
+    </div>
+  }
+
+  @if (state.request().error) {
+    <div class="error-box" role="alert">
+      <span class="error-mark">!</span>
+      <div>
+        <strong>Upload needs attention</strong>
+        <p>{{ state.request().error }}</p>
+      </div>
+    </div>
+  }
+
+  <div class="pipeline">
+    <div
+      class="pipeline-step"
+      [class.active]="state.request().phase === 'validating'"
+      [class.done]="state.request().phase !== 'idle' && state.request().phase !== 'validating' && !state.document().error"
+    >
+      <span class="step-number">1</span>
+      <div>
+        <strong>Validate</strong>
+        <small>Browser checks</small>
+      </div>
+    </div>
+
+    <div
+      class="pipeline-step"
+      [class.active]="state.request().phase === 'uploading'"
+      [class.done]="state.request().phase === 'processing' || state.request().phase === 'completed'"
+    >
+      <span class="step-number">2</span>
+      <div>
+        <strong>Upload</strong>
+        <small>Multipart transfer</small>
+      </div>
+    </div>
+
+    <div
+      class="pipeline-step"
+      [class.active]="state.request().phase === 'processing'"
+      [class.done]="state.request().phase === 'completed'"
+    >
+      <span class="step-number">3</span>
+      <div>
+        <strong>Extract</strong>
+        <small>PDF text</small>
+      </div>
+    </div>
+
+    <div
+      class="pipeline-step"
+      [class.active]="state.request().phase === 'processing'"
+      [class.done]="state.request().phase === 'completed'"
+    >
+      <span class="step-number">4</span>
+      <div>
+        <strong>Chunk</strong>
+        <small>Semantic units</small>
+      </div>
+    </div>
+
+    <div
+      class="pipeline-step"
+      [class.active]="state.request().phase === 'processing'"
+      [class.done]="state.request().phase === 'completed'"
+    >
+      <span class="step-number">5</span>
+      <div>
+        <strong>Embed</strong>
+        <small>Vectorization</small>
+      </div>
+    </div>
+
+    <div
+      class="pipeline-step"
+      [class.active]="state.request().phase === 'processing'"
+      [class.done]="state.request().phase === 'completed'"
+    >
+      <span class="step-number">6</span>
+      <div>
+        <strong>Index</strong>
+        <small>Chroma store</small>
+      </div>
+    </div>
+
+    <div
+      class="pipeline-step"
+      [class.active]="state.request().phase === 'completed'"
+      [class.done]="state.request().phase === 'completed'"
+    >
+      <span class="step-number">7</span>
+      <div>
+        <strong>Ready</strong>
+        <small>Ask questions</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="upload-actions">
+    <button
+      type="button"
+      class="text-button"
+      [disabled]="state.isBusy()"
+      (click)="removeFile()"
+    >
+      Remove
+    </button>
+
+    <button
+      type="button"
+      class="primary-button"
+      [disabled]="!selectedFile || state.isBusy()"
+      (click)="upload()"
+    >
+      @if (state.isBusy()) {
+        <span class="button-spinner"></span>
+        <span>Processing…</span>
+      } @else if (state.request().phase === 'completed') {
+        <span>Re-index PDF</span>
+      } @else {
+        <span>Upload &amp; Index</span>
+      }
+
+      @if (!state.isBusy()) {
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4v12m0-12L7 9m5-5 5 5M5 20h14"/>
+        </svg>
+      }
+    </button>
+  </div>
+</section>

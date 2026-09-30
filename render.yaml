@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: pdf-rag-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    # For persistent Chroma data (paid plans only), uncomment this
+    # and also set CHROMA_PERSIST_DIR to /var/data/chroma below:
+    # disk:
+    #   name: chroma-data
+    #   mountPath: /var/data
+    #   sizeGB: 1
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: API_PREFIX
+        value: /api
+      - key: CHROMA_PERSIST_DIR
+        value: /app/chroma_data
+      - key: HUGGINGFACE_API_TOKEN
+        sync: false
+      - key: HF_EMBEDDING_MODEL
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false

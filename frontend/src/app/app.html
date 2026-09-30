@@ -1,0 +1,123 @@
+<main class="page">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h4"/>
+          </svg>
+        </div>
+        <div>
+          <h1>PDF RAG Studio</h1>
+          <p>Intelligent document workspace</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">
+          <span class="kicker-dot"></span>
+          Grounded answers · source-aware retrieval
+        </span>
+
+        <h2>Turn a PDF into a <span>searchable conversation.</span></h2>
+
+        <p>
+          Upload one document, let the backend index its evidence, and ask questions
+          answered from the document itself. Retrieval, relevance filtering, grounding,
+          and generation stay on the FastAPI backend.
+        </p>
+
+        <ol class="flow" aria-label="Application flow">
+          <li>Upload</li>
+          <li>Index</li>
+          <li>Retrieve</li>
+          <li>Answer</li>
+        </ol>
+      </div>
+
+      <div class="metrics">
+        <article class="metric">
+          <span class="metric-label">Indexed documents</span>
+          <strong>{{ state.indexedSummary().label }}</strong>
+          <small>{{ state.indexedSummary().pages }} pages</small>
+        </article>
+
+        <article class="metric">
+          <span class="metric-label">Indexed evidence</span>
+          <strong>{{ state.indexedSummary().chunks }}</strong>
+          <small>{{ state.indexedSummary().count }} documents</small>
+        </article>
+
+        <article class="metric">
+          <span class="metric-label">Workspace mode</span>
+          <strong>{{ environment.chatMockMode ? 'Local mock' : 'Live RAG' }}</strong>
+          <small>FastAPI backend</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <aside class="sidebar">
+        <app-document-upload></app-document-upload>
+        <app-memory-controls></app-memory-controls>
+      </aside>
+
+      <section class="chat-area">
+        <app-chat></app-chat>
+      </section>
+    </section>
+
+    <section class="status-strip" aria-label="Pipeline status">
+      <div class="status-card">
+        <span class="status-card-icon">01</span>
+        <div>
+          <span class="status-label">Document</span>
+          <strong>{{ state.indexedSummary().count > 0 ? state.indexedSummary().label : 'Waiting for PDF' }}</strong>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <span class="status-card-icon">02</span>
+        <div>
+          <span class="status-label">Indexed chunks</span>
+          <strong>{{ state.indexedSummary().chunks }}</strong>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <span class="status-card-icon">03</span>
+        <div>
+          <span class="status-label">Pipeline phase</span>
+          <strong class="phase">{{ state.request().phase }}</strong>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <span class="status-card-icon">04</span>
+        <div>
+          <span class="status-label">Semantic memory</span>
+          <strong>{{ state.indexedSummary().count > 0 ? 'Active' : (state.application().memoryResetState === 'cleared' ? 'Cleared' : 'Empty') }}</strong>
+        </div>
+      </div>
+    </section>
+
+    @if (state.request().error) {
+      <div class="global-error" role="alert">
+        <span class="error-icon">!</span>
+        <div>
+          <strong>Something needs attention</strong>
+          <p>{{ state.request().error }}</p>
+        </div>
+      </div>
+    }
+
+    <footer class="app-footer">
+      <span>PDF RAG Studio</span>
+      <span>Angular · FastAPI · Chroma · Hugging Face · Groq</span>
+    </footer>
+  </div>
+</main>
