@@ -9,6 +9,20 @@ from app.document.models import ExtractedPage
 def extract_pdf_pages(file_bytes: bytes) -> list[ExtractedPage]:
     try:
         reader = PdfReader(BytesIO(file_bytes), strict=False)
+
+        # PDFs protected only by an owner password open with an empty user
+        # password; they must be decrypted before text can be extracted.
+        if reader.is_encrypted:
+            if not reader.decrypt(""):
+                raise ApplicationException(
+                    message=(
+                        "The PDF is password-protected. Remove the password "
+                        "and upload it again."
+                    ),
+                    status_code=422,
+                    error_code="PDF_ENCRYPTED",
+                )
+
         pages: list[ExtractedPage] = []
 
         for index, page in enumerate(reader.pages, start=1):

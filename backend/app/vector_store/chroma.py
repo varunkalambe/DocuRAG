@@ -65,14 +65,54 @@ class ChromaStore:
                 },
             )
             entry["chunk_count"] += 1
+            # Prefer the true PDF page count stored at ingestion time and fall
+            # back to the highest page seen for documents indexed earlier.
             entry["page_count"] = max(
-                entry["page_count"], int(metadata.get("end_page", 0))
+                entry["page_count"],
+                int(metadata.get("end_page", 0) or 0),
+                int(metadata.get("document_page_count", 0) or 0),
             )
 
         return sorted(
             documents.values(),
             key=lambda item: (item["filename"].lower(), item["document_id"]),
         )
+
+    def get_document_chunks(
+        self,
+        document_fingerprint: str,
+    ) -> list[dict[str, Any]]:
+        """
+        Return every chunk of one document in reading order.
+
+        Used by document-level question answering, which needs a
+        representative sample of the whole document rather than the
+        nearest neighbours of a query vector.
+        """
+        with self._lock:
+            result = self.collection.get(
+                where={"document_fingerprint": document_fingerprint},
+                include=["documents", "metadatas"],
+            )
+
+        ids = result.get("ids") or []
+        documents = result.get("documents") or []
+        metadatas = result.get("metadatas") or []
+
+        chunks: list[dict[str, Any]] = []
+        for chunk_id, document, metadata in zip(ids, documents, metadatas):
+            metadata = metadata or {}
+            chunks.append(
+                {
+                    "chunk_id": str(chunk_id),
+                    "text": str(document or ""),
+                    "metadata": dict(metadata),
+                    "sequence": int(metadata.get("sequence", 0) or 0),
+                }
+            )
+
+        chunks.sort(key=lambda item: item["sequence"])
+        return chunks
 
     def stored_dimension(self) -> int | None:
         """Dimensionality of vectors already stored, or None if empty."""

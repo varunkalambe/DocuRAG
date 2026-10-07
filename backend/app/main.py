@@ -1,10 +1,11 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.router import api_router
 from app.observability.logging import configure_logging, get_logger, log_event
@@ -39,26 +40,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# The browser frontend is intentionally kept credential-free for this local
-# application. Credentials for Hugging Face and Groq remain server-side.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=list(settings.CORS_ALLOWED_ORIGINS),
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-)
-
 app.add_exception_handler(
     ApplicationException,
     application_exception_handler,
 )
 
 
-@app.exception_handler(HTTPException)
+@app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(
     request: Request,
-    exc: HTTPException,
+    exc: StarletteHTTPException,
 ):
     return JSONResponse(
         status_code=exc.status_code,
@@ -130,6 +121,33 @@ async def request_timing_middleware(request: Request, call_next):
     try:
         response = await call_next(request)
         return response
+    except Exception as exc:  # noqa: BLE001
+        # Convert unexpected errors into the standard JSON error contract
+        # here, inside the CORS middleware, so the browser receives a readable
+        # error instead of an opaque CORS failure.
+        logger.error(
+            "unhandled_exception",
+            exc_info=(type(exc), exc, exc.__traceback__),
+            extra={
+                "event": "unhandled_exception",
+                "fields": {
+                    "method": request.method,
+                    "path": request.url.path,
+                },
+            },
+        )
+        response = JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "An unexpected internal error occurred.",
+                    "details": None,
+                },
+            },
+        )
+        return response
     finally:
         elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
         log_event(
@@ -141,6 +159,19 @@ async def request_timing_middleware(request: Request, call_next):
             status_code=response.status_code if response is not None else 500,
             latency_ms=elapsed_ms,
         )
+
+
+# CORS must be the OUTERMOST middleware (added last) so that every response,
+# including error responses, carries the CORS headers the browser requires.
+# The frontend is intentionally credential-free; Hugging Face and Groq
+# credentials remain server-side.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(settings.CORS_ALLOWED_ORIGINS),
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 app.include_router(
     api_router,

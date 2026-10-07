@@ -53,3 +53,4 @@ class QueryResult:
     top_k: int
     relevance_threshold: float
     context_token_estimate: int
+    mode: str = "retrieval"

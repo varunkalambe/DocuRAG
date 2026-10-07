@@ -28,5 +28,6 @@ class GenerationResponseNormalizer:
                 "top_k": result.top_k,
                 "relevance_threshold": result.relevance_threshold,
                 "context_token_estimate": result.context_token_estimate,
+                "mode": result.mode,
             },
         }

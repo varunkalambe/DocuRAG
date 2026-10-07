@@ -13,6 +13,7 @@ class Chunk:
     sequence: int
     word_count: int
     source_boundaries: tuple[str, ...]
+    document_page_count: int = 0
 
     @property
     def metadata(self) -> dict[str, Any]:
@@ -24,4 +25,5 @@ class Chunk:
             "sequence": self.sequence,
             "word_count": self.word_count,
             "source_boundaries": "|".join(self.source_boundaries),
+            "document_page_count": self.document_page_count,
         }

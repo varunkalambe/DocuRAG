@@ -7,7 +7,16 @@ from app.core.exceptions import ApplicationException
 
 
 PDF_SIGNATURE = b"%PDF-"
-ALLOWED_CONTENT_TYPES = {"application/pdf"}
+# Browsers/OSes label PDFs inconsistently. The real check is the PDF
+# signature + a successful parse below, so common aliases are accepted.
+ALLOWED_CONTENT_TYPES = {
+    "application/pdf",
+    "application/x-pdf",
+    "application/acrobat",
+    "application/octet-stream",
+}
+# The PDF specification allows a few bytes of junk before the header.
+PDF_SIGNATURE_WINDOW = 1024
 
 
 @dataclass(frozen=True)
@@ -55,7 +64,15 @@ def validate_pdf(
             error_code="MISSING_FILENAME",
         )
 
-    clean_filename = filename.strip()
+    # Some clients send a full client-side path; keep only the file name.
+    clean_filename = filename.strip().replace("\\", "/").split("/")[-1].strip()
+
+    if not clean_filename:
+        raise ApplicationException(
+            message="A filename is required.",
+            status_code=400,
+            error_code="MISSING_FILENAME",
+        )
 
     if not clean_filename.lower().endswith(".pdf"):
         raise ApplicationException(
@@ -76,7 +93,7 @@ def validate_pdf(
             details={"content_type": normalized_content_type},
         )
 
-    if not file_bytes.startswith(PDF_SIGNATURE):
+    if PDF_SIGNATURE not in file_bytes[:PDF_SIGNATURE_WINDOW]:
         raise ApplicationException(
             message="The uploaded content does not have a valid PDF signature.",
             status_code=400,
@@ -85,7 +102,26 @@ def validate_pdf(
 
     try:
         reader = PdfReader(BytesIO(file_bytes), strict=False)
+
+        if reader.is_encrypted:
+            try:
+                decrypted = reader.decrypt("")
+            except Exception:
+                decrypted = 0
+
+            if not decrypted:
+                raise ApplicationException(
+                    message=(
+                        "The PDF is password-protected. Remove the password "
+                        "and upload it again."
+                    ),
+                    status_code=422,
+                    error_code="PDF_ENCRYPTED",
+                )
+
         _ = len(reader.pages)
+    except ApplicationException:
+        raise
     except Exception as exc:
         raise ApplicationException(
             message="The uploaded file could not be opened as a valid PDF.",

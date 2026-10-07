@@ -3,6 +3,7 @@ from app.embeddings.huggingface import HuggingFaceEmbeddingAdapter
 from app.generation.groq import GroqAdapter
 from app.indexing.chroma_indexer import ChromaIndexer
 from app.query.context import ContextAssembler
+from app.query.document_level import DocumentOverviewBuilder
 from app.query.prompt import GroundedPromptBuilder
 from app.query.relevance import RelevanceFilter
 from app.query.retrieval import ChromaRetriever
@@ -45,6 +46,7 @@ def get_query_service() -> QueryService:
             context_assembler=ContextAssembler(),
             prompt_builder=GroundedPromptBuilder(),
             generator=GroqAdapter(),
+            overview_builder=DocumentOverviewBuilder(store),
         )
 
     return _query_service

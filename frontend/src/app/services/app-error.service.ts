@@ -58,6 +58,7 @@ export class AppErrorService {
     if (code === 'PAGE_EXTRACTION_FAILED'
       || code === 'PDF_EXTRACTION_FAILED'
       || code === 'NO_EXTRACTABLE_TEXT'
+      || code === 'PDF_ENCRYPTED'
       || code === 'CORRUPTED_PDF') {
       return {
         category: 'document-extraction',

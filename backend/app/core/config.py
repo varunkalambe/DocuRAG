@@ -27,6 +27,18 @@ def _csv(name: str, default: str) -> tuple[str, ...]:
     )
 
 
+def _bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    value = raw.strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return True
+    if value in {"0", "false", "no", "off"}:
+        return False
+    raise ConfigurationError(f"{name} must be a boolean (true/false).")
+
+
 def _positive_int(name: str, default: int) -> int:
     raw = os.getenv(name)
     if raw is None or not raw.strip():
@@ -114,6 +126,12 @@ class Settings:
     RELEVANCE_THRESHOLD: float
     MAX_CONTEXT_TOKENS: int
 
+    # Document-level (overview / summary / metadata) question answering.
+    OVERVIEW_MAX_CHUNKS_PER_DOCUMENT: int
+    OVERVIEW_EXCERPT_WORDS: int
+    OVERVIEW_MAX_DOCUMENTS: int
+    ENABLE_OVERVIEW_FALLBACK: bool
+
     HTTP_TIMEOUT_SECONDS: float
 
     def validate(self) -> None:
@@ -179,8 +197,10 @@ settings = Settings(
     HF_RETRY_BASE_SECONDS=_positive_float("HF_RETRY_BASE_SECONDS", 1.0),
     GROQ_API_KEY=_string("GROQ_API_KEY"),
     GROQ_MODEL=_string("GROQ_MODEL"),
+    # Reasoning models (e.g. GPT-OSS) spend completion tokens on reasoning,
+    # so 512 can yield truncated or empty answers. 1024 is a safer default.
     GROQ_MAX_COMPLETION_TOKENS=_positive_int(
-        "GROQ_MAX_COMPLETION_TOKENS", 512
+        "GROQ_MAX_COMPLETION_TOKENS", 1024
     ),
     GROQ_TEMPERATURE=_non_negative_float("GROQ_TEMPERATURE", 0.2),
     GROQ_MAX_RETRIES=_non_negative_int("GROQ_MAX_RETRIES", 2),
@@ -206,6 +226,12 @@ settings = Settings(
         "RELEVANCE_THRESHOLD", 0.70
     ),
     MAX_CONTEXT_TOKENS=_positive_int("MAX_CONTEXT_TOKENS", 4000),
+    OVERVIEW_MAX_CHUNKS_PER_DOCUMENT=_positive_int(
+        "OVERVIEW_MAX_CHUNKS_PER_DOCUMENT", 10
+    ),
+    OVERVIEW_EXCERPT_WORDS=_positive_int("OVERVIEW_EXCERPT_WORDS", 160),
+    OVERVIEW_MAX_DOCUMENTS=_positive_int("OVERVIEW_MAX_DOCUMENTS", 5),
+    ENABLE_OVERVIEW_FALLBACK=_bool("ENABLE_OVERVIEW_FALLBACK", True),
     HTTP_TIMEOUT_SECONDS=_positive_float(
         "HTTP_TIMEOUT_SECONDS", 30.0
     ),

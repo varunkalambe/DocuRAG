@@ -47,9 +47,18 @@ export class PdfClientValidatorService {
       };
     }
 
+    // Browsers/OSes label PDFs inconsistently; the backend verifies the real
+    // PDF signature, so common aliases are accepted here.
+    const acceptedMimeTypes = [
+      'application/pdf',
+      'application/x-pdf',
+      'application/acrobat',
+      'application/octet-stream',
+    ];
+
     if (
       file.type &&
-      file.type !== 'application/pdf'
+      !acceptedMimeTypes.includes(file.type.toLowerCase())
     ) {
       return {
         valid: false,

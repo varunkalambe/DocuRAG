@@ -1,6 +1,6 @@
 import hashlib
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from app.chunking.models import Chunk
 from app.core.config import settings
@@ -126,7 +126,14 @@ class SemanticChunker:
                 error_code="NO_CHUNKS_CREATED",
             )
 
-        return chunks
+        # Record the true page count of the source PDF on every chunk so
+        # document-level questions ("how many pages?") are answered exactly,
+        # even when trailing pages contain no extractable text.
+        total_pages = len(pages)
+        return [
+            replace(chunk, document_page_count=total_pages)
+            for chunk in chunks
+        ]
 
     def _build_page_units(self, page: NormalizedPage) -> list[_TextUnit]:
         units: list[_TextUnit] = []
