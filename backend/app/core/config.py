@@ -1,6 +1,7 @@
 import os
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -98,6 +99,19 @@ class Settings:
     APP_ENV: str
     API_PREFIX: str
 
+    # Embedding provider selection.
+    #   "huggingface": remote Hugging Face Inference Providers (needs credits).
+    #   "local":       in-process ONNX embeddings via fastembed (no API, no cost).
+    EMBEDDING_PROVIDER: str
+    # When the primary provider is "huggingface" and it fails with
+    # 402 / 429 / auth / outage, transparently use the local model instead.
+    EMBEDDING_FALLBACK_TO_LOCAL: bool
+    EMBEDDING_PRIMARY_COOLDOWN_SECONDS: int
+    LOCAL_EMBEDDING_MODEL: str
+    LOCAL_EMBEDDING_CACHE_DIR: str
+    LOCAL_EMBEDDING_BATCH_SIZE: int
+    LOCAL_EMBEDDING_THREADS: int
+
     HUGGINGFACE_API_TOKEN: str
     HF_EMBEDDING_MODEL: str
     HF_PROVIDER: str
@@ -137,12 +151,21 @@ class Settings:
     HTTP_TIMEOUT_SECONDS: float
 
     def validate(self) -> None:
+        if self.EMBEDDING_PROVIDER not in {"huggingface", "local"}:
+            raise ConfigurationError(
+                "EMBEDDING_PROVIDER must be 'huggingface' or 'local'."
+            )
+
         mandatory = {
-            "HUGGINGFACE_API_TOKEN": self.HUGGINGFACE_API_TOKEN,
-            "HF_EMBEDDING_MODEL": self.HF_EMBEDDING_MODEL,
             "GROQ_API_KEY": self.GROQ_API_KEY,
             "GROQ_MODEL": self.GROQ_MODEL,
         }
+
+        if self.EMBEDDING_PROVIDER == "huggingface":
+            mandatory["HUGGINGFACE_API_TOKEN"] = self.HUGGINGFACE_API_TOKEN
+            mandatory["HF_EMBEDDING_MODEL"] = self.HF_EMBEDDING_MODEL
+        else:
+            mandatory["LOCAL_EMBEDDING_MODEL"] = self.LOCAL_EMBEDDING_MODEL
 
         for name, value in mandatory.items():
             if not value.strip():
@@ -195,12 +218,31 @@ class Settings:
             )
 
 
+_BACKEND_DIR = Path(__file__).resolve().parents[2]
+
 settings = Settings(
     APP_NAME=_string("APP_NAME", "PDF RAG Application"),
     APP_ENV=_string("APP_ENV", "development"),
     API_PREFIX=_string("API_PREFIX", "/api"),
+    EMBEDDING_PROVIDER=_string("EMBEDDING_PROVIDER", "huggingface").lower(),
+    EMBEDDING_FALLBACK_TO_LOCAL=_bool("EMBEDDING_FALLBACK_TO_LOCAL", True),
+    EMBEDDING_PRIMARY_COOLDOWN_SECONDS=_non_negative_int(
+        "EMBEDDING_PRIMARY_COOLDOWN_SECONDS", 300
+    ),
+    LOCAL_EMBEDDING_MODEL=_string(
+        "LOCAL_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+    ),
+    # Anchored to the backend folder (not the working directory) so the model
+    # downloaded during the Render build is found again at runtime.
+    LOCAL_EMBEDDING_CACHE_DIR=_string(
+        "LOCAL_EMBEDDING_CACHE_DIR", str(_BACKEND_DIR / ".fastembed_cache")
+    ),
+    LOCAL_EMBEDDING_BATCH_SIZE=_positive_int("LOCAL_EMBEDDING_BATCH_SIZE", 16),
+    LOCAL_EMBEDDING_THREADS=_positive_int("LOCAL_EMBEDDING_THREADS", 1),
     HUGGINGFACE_API_TOKEN=_string("HUGGINGFACE_API_TOKEN"),
-    HF_EMBEDDING_MODEL=_string("HF_EMBEDDING_MODEL"),
+    HF_EMBEDDING_MODEL=_string(
+        "HF_EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+    ),
     HF_PROVIDER=_string("HF_PROVIDER", "auto"),
     HF_BATCH_SIZE=_positive_int("HF_BATCH_SIZE", 8),
     HF_MAX_RETRIES=_positive_int("HF_MAX_RETRIES", 3),
@@ -247,4 +289,3 @@ settings = Settings(
         "HTTP_TIMEOUT_SECONDS", 30.0
     ),
 )
-

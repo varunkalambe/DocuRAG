@@ -10,7 +10,6 @@ from app.document.extraction import extract_pdf_pages
 from app.document.fingerprint import fingerprint_document
 from app.document.normalization import normalize_pages
 from app.document.validation import validate_pdf
-from app.embeddings.huggingface import HuggingFaceEmbeddingAdapter
 from app.indexing.chroma_indexer import ChromaIndexer
 from app.observability.logging import get_logger, log_event
 
@@ -36,7 +35,7 @@ class IngestionService:
     def __init__(
         self,
         chunker: SemanticChunker,
-        embedder: HuggingFaceEmbeddingAdapter,
+        embedder,
         indexer: ChromaIndexer,
     ) -> None:
         self.chunker = chunker
@@ -139,6 +138,10 @@ class IngestionService:
         timings["indexing_ms"] = round((time.perf_counter() - stage_started) * 1000, 2)
         timings["total_ms"] = round((time.perf_counter() - started) * 1000, 2)
 
+        embed_batch_size = max(
+            1, int(getattr(self.embedder, "batch_size", settings.HF_BATCH_SIZE))
+        )
+
         log_event(
             logger,
             20,
@@ -148,7 +151,7 @@ class IngestionService:
             page_count=page_count,
             empty_page_count=empty_page_count,
             chunk_count=len(chunks),
-            embedding_batch_count=(len(chunks) + settings.HF_BATCH_SIZE - 1) // settings.HF_BATCH_SIZE,
+            embedding_batch_count=(len(chunks) + embed_batch_size - 1) // embed_batch_size,
             vector_count=index_result.indexed_count,
             timings_ms=timings,
         )

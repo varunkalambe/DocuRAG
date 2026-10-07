@@ -138,6 +138,21 @@ class HuggingFaceEmbeddingAdapter:
                         details={"provider_status": status},
                     ) from exc
 
+                if status == 402:
+                    # Monthly Inference Providers credits are used up. Retrying
+                    # cannot succeed, so fail fast with an actionable message.
+                    raise ApplicationException(
+                        message=(
+                            "Hugging Face Inference credits are exhausted "
+                            "(402 Payment Required). Add credits to the "
+                            "Hugging Face account, or set "
+                            "EMBEDDING_PROVIDER=local on the backend."
+                        ),
+                        status_code=502,
+                        error_code="EMBEDDING_CREDITS_EXHAUSTED",
+                        details={"provider_status": status},
+                    ) from exc
+
                 retryable = status == 429 or (
                     status is not None and status >= 500
                 )
@@ -331,4 +346,3 @@ class HuggingFaceEmbeddingAdapter:
     @property
     def dimension(self) -> int | None:
         return self._dimension
-

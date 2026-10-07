@@ -1,5 +1,5 @@
 from app.chunking.semantic import SemanticChunker
-from app.embeddings.huggingface import HuggingFaceEmbeddingAdapter
+from app.embeddings.factory import get_embedder
 from app.generation.groq import GroqAdapter
 from app.indexing.chroma_indexer import ChromaIndexer
 from app.query.context import ContextAssembler
@@ -26,7 +26,7 @@ def get_ingestion_service() -> IngestionService:
         store = get_vector_store()
         _ingestion_service = IngestionService(
             chunker=SemanticChunker(),
-            embedder=HuggingFaceEmbeddingAdapter(),
+            embedder=get_embedder(),
             indexer=ChromaIndexer(store),
         )
 
@@ -40,7 +40,7 @@ def get_query_service() -> QueryService:
         store = get_vector_store()
         _query_service = QueryService(
             validator=QueryValidator(store),
-            embedder=HuggingFaceEmbeddingAdapter(),
+            embedder=get_embedder(),
             retriever=ChromaRetriever(store),
             relevance_filter=RelevanceFilter(),
             context_assembler=ContextAssembler(),
