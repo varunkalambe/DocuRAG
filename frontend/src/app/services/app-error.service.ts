@@ -33,11 +33,34 @@ export class AppErrorService {
       ?? '',
     ).trim();
 
+    const hasAppCode = typeof error?.error?.error?.code === 'string'
+      || typeof error?.error?.code === 'string';
+
+    // Gateway-level failures (Render cold start / crash / out of memory) come
+    // back as plain HTML or an empty body, not as the application's JSON.
+    if (!hasAppCode && [502, 503, 504].includes(error?.status)) {
+      return {
+        category: 'backend-unavailable',
+        code: `HTTP_${error.status}`,
+        message: 'The backend is waking up or restarting. Wait about a minute and try again.',
+        retryable: true,
+      };
+    }
+
+    if (error?.status === 413) {
+      return {
+        category: 'file-validation',
+        code: 'FILE_TOO_LARGE',
+        message: 'The selected PDF is too large for the server.',
+        retryable: false,
+      };
+    }
+
     if (error?.name === 'TimeoutError' || error?.status === 0) {
       return {
         category: 'backend-unavailable',
         code,
-        message: 'The backend did not respond. Check that FastAPI is running and try again.',
+        message: 'The backend did not respond. The server may be waking up or CORS_ALLOWED_ORIGINS may not include this site. Try again in a minute.',
         retryable: true,
       };
     }
@@ -115,3 +138,4 @@ export class AppErrorService {
     };
   }
 }
+

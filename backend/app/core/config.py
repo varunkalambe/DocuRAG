@@ -1,4 +1,5 @@
 import os
+import re
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
@@ -115,6 +116,7 @@ class Settings:
     CHROMA_PERSIST_DIR: str
 
     CORS_ALLOWED_ORIGINS: tuple[str, ...]
+    CORS_ALLOW_ORIGIN_REGEX: str
 
     MAX_UPLOAD_SIZE_BYTES: int
 
@@ -155,6 +157,14 @@ class Settings:
             raise ConfigurationError(
                 "CORS_ALLOWED_ORIGINS must contain at least one origin."
             )
+
+        if self.CORS_ALLOW_ORIGIN_REGEX:
+            try:
+                re.compile(self.CORS_ALLOW_ORIGIN_REGEX)
+            except re.error as exc:
+                raise ConfigurationError(
+                    f"CORS_ALLOW_ORIGIN_REGEX is not a valid regex: {exc}"
+                ) from exc
 
         if "*" in self.CORS_ALLOWED_ORIGINS:
             raise ConfigurationError(
@@ -215,6 +225,7 @@ settings = Settings(
         "CORS_ALLOWED_ORIGINS",
         "http://127.0.0.1:4200,http://localhost:4200",
     ),
+    CORS_ALLOW_ORIGIN_REGEX=_string("CORS_ALLOW_ORIGIN_REGEX", ""),
     MAX_UPLOAD_SIZE_BYTES=_positive_int(
         "MAX_UPLOAD_SIZE_BYTES", 10 * 1024 * 1024
     ),
@@ -236,3 +247,4 @@ settings = Settings(
         "HTTP_TIMEOUT_SECONDS", 30.0
     ),
 )
+

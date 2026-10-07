@@ -2,11 +2,30 @@ import asyncio
 import math
 from typing import Any
 
-from huggingface_hub import AsyncInferenceClient, InferenceTimeoutError
-from huggingface_hub.utils import HfHubHTTPError
+from huggingface_hub import AsyncInferenceClient
+
+try:  # huggingface_hub >= 0.30
+    from huggingface_hub.errors import HfHubHTTPError, InferenceTimeoutError
+except ImportError:  # pragma: no cover - older releases
+    from huggingface_hub import InferenceTimeoutError
+    from huggingface_hub.utils import HfHubHTTPError
 
 from app.core.config import settings
 from app.core.exceptions import ApplicationException
+from app.observability.logging import get_logger, log_event
+
+
+logger = get_logger("pdf_rag.embeddings.huggingface")
+
+
+def _safe_text(exc: Exception, limit: int = 300) -> str:
+    """Provider error text with the API token scrubbed, length-capped."""
+    text = str(exc) or type(exc).__name__
+    token = settings.HUGGINGFACE_API_TOKEN
+    if token:
+        text = text.replace(token, "***")
+    text = " ".join(text.split())
+    return text[:limit]
 
 
 class HuggingFaceEmbeddingAdapter:
@@ -73,6 +92,13 @@ class HuggingFaceEmbeddingAdapter:
                 )
 
             except InferenceTimeoutError as exc:
+                log_event(
+                    logger,
+                    40,
+                    "hf_embedding_timeout",
+                    attempt=attempt,
+                    exception_message=_safe_text(exc),
+                )
                 if attempt >= self.max_retries:
                     raise ApplicationException(
                         message="Hugging Face embedding request timed out.",
@@ -86,12 +112,30 @@ class HuggingFaceEmbeddingAdapter:
 
             except HfHubHTTPError as exc:
                 status = self._status_code(exc)
+                detail = _safe_text(exc)
+
+                log_event(
+                    logger,
+                    40,
+                    "hf_embedding_http_error",
+                    attempt=attempt,
+                    provider_status=status,
+                    model=self.model,
+                    provider=settings.HF_PROVIDER,
+                    exception_type=type(exc).__name__,
+                    exception_message=detail,
+                )
 
                 if status in {401, 403}:
                     raise ApplicationException(
-                        message="Hugging Face credentials were rejected.",
+                        message=(
+                            "Hugging Face credentials were rejected. Check "
+                            "HUGGINGFACE_API_TOKEN and that it has permission "
+                            "to call Inference Providers."
+                        ),
                         status_code=502,
                         error_code="EMBEDDING_INVALID_CREDENTIALS",
+                        details={"provider_status": status},
                     ) from exc
 
                 retryable = status == 429 or (
@@ -112,8 +156,20 @@ class HuggingFaceEmbeddingAdapter:
                         details={"provider_status": status},
                     ) from exc
 
+                if status in {400, 404, 422}:
+                    raise ApplicationException(
+                        message=(
+                            f"Hugging Face rejected the embedding request "
+                            f"(model '{self.model}', provider "
+                            f"'{settings.HF_PROVIDER or 'auto'}'): {detail}"
+                        ),
+                        status_code=502,
+                        error_code="EMBEDDING_MODEL_UNAVAILABLE",
+                        details={"provider_status": status},
+                    ) from exc
+
                 raise ApplicationException(
-                    message="Hugging Face embedding provider request failed.",
+                    message=f"Hugging Face embedding provider request failed: {detail}",
                     status_code=502,
                     error_code="EMBEDDING_PROVIDER_ERROR",
                     details={"provider_status": status},
@@ -124,11 +180,48 @@ class HuggingFaceEmbeddingAdapter:
                 # malformed provider response). Preserve its specific code.
                 raise
 
+            except (OSError, asyncio.TimeoutError) as exc:
+                # Network-level failure (DNS, reset, connect timeout).
+                log_event(
+                    logger,
+                    40,
+                    "hf_embedding_network_error",
+                    attempt=attempt,
+                    exception_type=type(exc).__name__,
+                    exception_message=_safe_text(exc),
+                )
+                if attempt >= self.max_retries:
+                    raise ApplicationException(
+                        message="Hugging Face could not be reached.",
+                        status_code=502,
+                        error_code="EMBEDDING_PROVIDER_ERROR",
+                        details={"exception_type": type(exc).__name__},
+                    ) from exc
+
+                await asyncio.sleep(
+                    self.retry_base_seconds * (2**attempt)
+                )
+
             except Exception as exc:
+                detail = _safe_text(exc)
+                log_event(
+                    logger,
+                    40,
+                    "hf_embedding_unexpected_exception",
+                    attempt=attempt,
+                    model=self.model,
+                    provider=settings.HF_PROVIDER,
+                    exception_type=type(exc).__name__,
+                    exception_message=detail,
+                )
                 raise ApplicationException(
-                    message="Unexpected Hugging Face embedding failure.",
+                    message=(
+                        f"Hugging Face embedding failed "
+                        f"({type(exc).__name__}): {detail}"
+                    ),
                     status_code=502,
                     error_code="EMBEDDING_PROVIDER_ERROR",
+                    details={"exception_type": type(exc).__name__},
                 ) from exc
 
         raise ApplicationException(
@@ -238,3 +331,4 @@ class HuggingFaceEmbeddingAdapter:
     @property
     def dimension(self) -> int | None:
         return self._dimension
+

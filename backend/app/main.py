@@ -168,6 +168,7 @@ async def request_timing_middleware(request: Request, call_next):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.CORS_ALLOWED_ORIGINS),
+    allow_origin_regex=settings.CORS_ALLOW_ORIGIN_REGEX or None,
     allow_credentials=False,
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -188,3 +189,4 @@ async def root():
             "environment": settings.APP_ENV,
         },
     }
+
