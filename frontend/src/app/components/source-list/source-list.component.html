@@ -1,43 +1,31 @@
-<section class="source-block" aria-label="Retrieved sources">
-  <div class="source-heading">
-    <div>
-      <span class="source-kicker">Evidence</span>
-      <strong>Retrieved sources</strong>
-    </div>
-    <span class="source-count">{{ sources().length }} chunks</span>
-  </div>
+<div class="sources">
+  <button
+    type="button"
+    class="sources-toggle"
+    [attr.aria-expanded]="open()"
+    (click)="toggle()"
+  >
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 3h7l5 5v13H7zM14 3v5h5"/>
+    </svg>
+    <span>{{ sources().length }} {{ sources().length === 1 ? 'source' : 'sources' }}</span>
+    <svg class="icon chevron" [class.open]="open()" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 9l6 6 6-6"/>
+    </svg>
+  </button>
 
-  <div class="source-list">
-    @for (source of sources(); track source.source_id) {
-    <article class="source-card">
-      <div class="rank-badge">#{{ source.rank }}</div>
-
-      <div class="source-main">
-        <div class="source-topline">
-          <strong [title]="source.filename">{{ source.filename }}</strong>
+  @if (open()) {
+    <ol class="source-rows">
+      @for (source of sources(); track source.source_id) {
+        <li class="source-row" [title]="'Chunk ' + source.chunk_id + ' · sequence ' + source.sequence">
+          <span class="idx">{{ source.rank }}</span>
+          <span class="name">{{ source.filename }}</span>
+          <span class="meta">{{ pages(source) }}</span>
           @if (source.distance > 0) {
-          <span>distance {{ source.distance | number:'1.3-5' }}</span>
-          } @else {
-          <span>document excerpt</span>
+            <span class="meta">{{ source.distance | number:'1.2-3' }}</span>
           }
-        </div>
-
-        <div class="source-meta">
-            <span class="meta-chip">
-              <b>Pages</b>
-              {{ source.start_page }}–{{ source.end_page }}
-            </span>
-          <span class="meta-chip">
-              <b>Sequence</b>
-              {{ source.sequence }}
-            </span>
-          <span class="meta-chip chunk-chip" [title]="source.chunk_id">
-              <b>Chunk</b>
-              {{ source.chunk_id }}
-            </span>
-        </div>
-      </div>
-    </article>
-    }
-  </div>
-</section>
+        </li>
+      }
+    </ol>
+  }
+</div>

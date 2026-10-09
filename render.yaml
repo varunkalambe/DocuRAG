@@ -1,32 +1,20 @@
 services:
   - type: web
-    name: pdf-rag-backend
+    name: pdf-rag-springboot
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: starter          # 512 MB. Use "standard" (2 GB) if the local embedding model runs out of memory
     healthCheckPath: /api/health
     autoDeploy: true
-    # For persistent Chroma data (paid plans only), uncomment this
-    # and also set CHROMA_PERSIST_DIR to /var/data/chroma below:
-    # disk:
-    #   name: chroma-data
-    #   mountPath: /var/data
-    #   sizeGB: 1
     envVars:
-      - key: APP_ENV
-        value: production
-      - key: API_PREFIX
-        value: /api
-      - key: CHROMA_PERSIST_DIR
-        value: /app/chroma_data
-      - key: HUGGINGFACE_API_TOKEN
-        sync: false
-      - key: HF_EMBEDDING_MODEL
-        sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: GROQ_MODEL
-        sync: false
+        value: llama-3.3-70b-versatile
+      - key: EMBEDDING_PROVIDER
+        value: local
       - key: CORS_ALLOWED_ORIGINS
         sync: false
+      - key: CHROMA_PERSIST_DIR
+        value: /tmp/vector-data

@@ -1,7 +1,5 @@
+target
 .env
-.venv
-venv
-__pycache__
-chroma_data
-scripts
-*.pyc
+*.log
+data
+chroma*

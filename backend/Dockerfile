@@ -1,15 +1,15 @@
-FROM python:3.11-slim
-
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
-
+# ---- build ----
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
+COPY pom.xml .
+RUN mvn -q -B dependency:go-offline
+COPY src ./src
+RUN mvn -q -B -DskipTests package && cp target/*.jar app.jar
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-
-COPY app ./app
-
-# One worker only: the Chroma persistent client is not multi-process safe.
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+# ---- run ----
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+COPY --from=build /app/app.jar app.jar
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70 -XX:+UseSerialGC"
+EXPOSE 8000
+CMD ["sh", "-c", "java -Dserver.port=${PORT:-8000} -jar app.jar"]

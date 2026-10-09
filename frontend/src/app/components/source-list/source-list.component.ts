@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { SourceMetadata } from '../../services/app-state.service';
@@ -12,4 +12,15 @@ import { SourceMetadata } from '../../services/app-state.service';
 })
 export class SourceListComponent {
   readonly sources = input<SourceMetadata[]>([]);
+  readonly open = signal(false);
+
+  toggle(): void {
+    this.open.update((value) => !value);
+  }
+
+  pages(source: SourceMetadata): string {
+    return source.start_page === source.end_page
+      ? `p. ${source.start_page}`
+      : `pp. ${source.start_page}–${source.end_page}`;
+  }
 }

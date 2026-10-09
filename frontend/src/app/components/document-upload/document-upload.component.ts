@@ -193,7 +193,7 @@ export class DocumentUploadComponent {
     this.state.setRequest({
       phase: 'uploading',
       uploadProgress: 0,
-      message: 'Uploading PDF to FastAPI...',
+      message: 'Uploading PDF to Spring Boot...',
       error: null,
     });
 
@@ -216,7 +216,7 @@ export class DocumentUploadComponent {
               phase: progress >= 100 ? 'processing' : 'uploading',
               uploadProgress: progress,
               message: progress >= 100
-                ? 'Upload complete. FastAPI is indexing the document...'
+                ? 'Upload complete. Spring Boot is indexing the document...'
                 : `Uploading PDF... ${progress}%`,
             });
             return;
@@ -225,7 +225,7 @@ export class DocumentUploadComponent {
           if (event.type === HttpEventType.Sent) {
             this.state.setRequest({
               phase: 'uploading',
-              message: 'Upload request sent. Waiting for FastAPI...',
+              message: 'Upload request sent. Waiting for Spring Boot...',
             });
             return;
           }
@@ -241,7 +241,7 @@ export class DocumentUploadComponent {
             this.state.setRequest({
               phase: 'processing',
               uploadProgress: 100,
-              message: 'Indexing: extraction → chunking → embeddings → Chroma...',
+              message: 'Indexing: extraction → chunking → embeddings → vector index...',
               error: null,
             });
 

@@ -7,7 +7,7 @@
   border-bottom: 1px solid var(--line);
 }
 .topbar-inner {
-  max-width: 1240px; margin: 0 auto; padding: 14px 28px;
+  max-width: 1560px; margin: 0 auto; padding: 14px 28px;
   display: flex; align-items: center; justify-content: space-between;
 }
 .brand { display: flex; align-items: center; gap: 12px; }
@@ -21,7 +21,7 @@
 .brand h1 { font-size: 17px; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em; }
 .brand p { margin-top: 2px; font-size: 12px; color: var(--ink-3); }
 
-.container { max-width: 1240px; margin: 0 auto; padding: 36px 28px 24px; }
+.container { max-width: 1560px; margin: 0 auto; padding: 36px 28px 24px; }
 
 /* Hero */
 .hero {
@@ -69,13 +69,13 @@
 .metric strong { font-size: 20px; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .metric small { font-size: 13px; color: var(--ink-2); }
 
-/* Workspace */
+/* Workspace: narrower sidebar, much larger chat */
 .workspace {
-  display: grid; grid-template-columns: minmax(340px, 410px) minmax(0, 1fr);
+  display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
   gap: 24px; align-items: start;
 }
 .sidebar { display: grid; gap: 20px; min-width: 0; }
-.chat-area { min-width: 0; position: sticky; top: 84px; }
+.chat-area { min-width: 0; position: sticky; top: 76px; }
 
 /* Status strip */
 .status-strip {

@@ -27,7 +27,7 @@ export class MemoryControlsComponent {
     }
 
     const confirmed = window.confirm(
-      'Wipe Memory will delete the current semantic document memory from the FastAPI Chroma store and reset the Angular document/conversation state. Continue?',
+      'Wipe Memory will delete the current semantic document memory from the Spring Boot vector store and reset the Angular document/conversation state. Continue?',
     );
 
     if (!confirmed) {

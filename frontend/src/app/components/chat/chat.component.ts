@@ -20,11 +20,12 @@ import {
 import { AppErrorService } from '../../services/app-error.service';
 import { ChatService } from '../../services/chat.service';
 import { SourceListComponent } from '../source-list/source-list.component';
+import { MarkdownPipe } from '../../pipes/markdown.pipe';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, SourceListComponent],
+  imports: [CommonModule, SourceListComponent, MarkdownPipe],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.css',
 })
@@ -61,6 +62,18 @@ export class ChatComponent implements AfterViewInit {
       && !this.state.isBusy()
       && this.question.trim().length > 0
       && this.question.trim().length <= environment.maxQuestionLength;
+  }
+
+  /** Enter sends the question; Shift+Enter inserts a new line. */
+  onEnter(event: Event): void {
+    const keyEvent = event as KeyboardEvent;
+    if (keyEvent.shiftKey || keyEvent.isComposing) {
+      return;
+    }
+    keyEvent.preventDefault();
+    if (this.canSubmit) {
+      this.submit();
+    }
   }
 
   submit(): void {

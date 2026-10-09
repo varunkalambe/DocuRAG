@@ -7,7 +7,7 @@
       </div>
       <h2>Add your PDF</h2>
       <p>
-        Select a text-based PDF. The browser validates the file first, then FastAPI
+        Select a text-based PDF. The browser validates the file first, then the Spring Boot backend
         performs extraction, chunking, embeddings, and indexing.
       </p>
     </div>
@@ -105,7 +105,7 @@
         ></div>
       </div>
       <div class="progress-meta">
-        <span>Browser → FastAPI</span>
+        <span>Browser → Spring Boot</span>
         <span>{{ state.request().uploadProgress }}%</span>
       </div>
     </div>
@@ -115,9 +115,9 @@
     <div class="processing-card">
       <span class="button-spinner"></span>
       <div>
-        <strong>FastAPI is processing your document</strong>
+        <strong>Spring Boot is processing your document</strong>
         <p>
-          Extraction → chunking → embeddings → Chroma indexing.
+          Extraction → chunking → embeddings → vector indexing.
           The backend response is the authoritative completion signal.
         </p>
       </div>
@@ -203,7 +203,7 @@
       <span class="step-number">6</span>
       <div>
         <strong>Index</strong>
-        <small>Chroma store</small>
+        <small>Vector store</small>
       </div>
     </div>
 

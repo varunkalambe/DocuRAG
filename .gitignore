@@ -1,26 +1,8 @@
-# Secrets
+backend/target/
+backend/.env
 .env
-.env.*
-!.env.example
-
-# Python
-__pycache__/
-*.pyc
-.venv/
-venv/
-backend/chroma_data/
-chroma_data/
-
-# Node / Angular
-node_modules/
-dist/
-.angular/
-.vercel/
-
-# OS / editor / local tooling
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
-c.py
+**/node_modules/
+frontend/dist/
+frontend/.angular/
+*.log
 project_code_dump.txt

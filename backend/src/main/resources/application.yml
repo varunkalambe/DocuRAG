@@ -1,0 +1,91 @@
+# All values come from environment variables (or a .env file in the working directory).
+# Variable names are identical to the previous FastAPI backend.
+spring:
+  application:
+    name: pdf-rag-backend
+  config:
+    import: optional:file:.env[.properties]
+  servlet:
+    multipart:
+      # Hard transport limit. The application limit (MAX_UPLOAD_SIZE_BYTES) returns the JSON FILE_TOO_LARGE error.
+      max-file-size: ${MULTIPART_MAX_BYTES:64MB}
+      max-request-size: ${MULTIPART_MAX_BYTES:64MB}
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    mapper:
+      allow-coercion-of-scalars: false
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  port: ${PORT:8000}
+  shutdown: graceful
+  forward-headers-strategy: framework
+  compression:
+    enabled: true
+  tomcat:
+    max-swallow-size: 128MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  pattern:
+    console: "%msg%n"
+  level:
+    root: INFO
+    org.apache.pdfbox: ERROR
+    org.apache.fontbox: ERROR
+
+app:
+  name: ${APP_NAME:PDF RAG Application}
+  env: ${APP_ENV:development}
+  api-prefix: ${API_PREFIX:/api}
+
+  # "local" = in-process ONNX embeddings (no API, no cost). "huggingface" = remote, with optional local fallback.
+  embedding-provider: ${EMBEDDING_PROVIDER:local}
+  embedding-fallback-to-local: ${EMBEDDING_FALLBACK_TO_LOCAL:true}
+  embedding-primary-cooldown-seconds: ${EMBEDDING_PRIMARY_COOLDOWN_SECONDS:300}
+  local-embedding-batch-size: ${LOCAL_EMBEDDING_BATCH_SIZE:16}
+
+  huggingface-api-token: ${HUGGINGFACE_API_TOKEN:}
+  hf-embedding-model: ${HF_EMBEDDING_MODEL:sentence-transformers/all-MiniLM-L6-v2}
+  hf-provider: ${HF_PROVIDER:hf-inference}
+  hf-batch-size: ${HF_BATCH_SIZE:8}
+  hf-max-retries: ${HF_MAX_RETRIES:3}
+  hf-retry-base-seconds: ${HF_RETRY_BASE_SECONDS:1.0}
+
+  groq-api-key: ${GROQ_API_KEY:}
+  groq-model: ${GROQ_MODEL:}
+  groq-base-url: ${GROQ_BASE_URL:https://api.groq.com/openai/v1}
+  groq-max-completion-tokens: ${GROQ_MAX_COMPLETION_TOKENS:1024}
+  groq-temperature: ${GROQ_TEMPERATURE:0.2}
+  groq-max-retries: ${GROQ_MAX_RETRIES:2}
+
+  chroma-distance-metric: ${CHROMA_DISTANCE_METRIC:cosine}
+  chroma-persist-dir: ${CHROMA_PERSIST_DIR:./chroma_data}
+
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:http://127.0.0.1:4200,http://localhost:4200}
+  cors-allow-origin-regex: ${CORS_ALLOW_ORIGIN_REGEX:}
+
+  max-upload-size-bytes: ${MAX_UPLOAD_SIZE_BYTES:10485760}
+  chunk-size: ${CHUNK_SIZE:500}
+  chunk-overlap: ${CHUNK_OVERLAP:50}
+  max-question-length: ${MAX_QUESTION_LENGTH:10000}
+  top-k: ${TOP_K:5}
+  relevance-threshold: ${RELEVANCE_THRESHOLD:0.70}
+  max-context-tokens: ${MAX_CONTEXT_TOKENS:4000}
+
+  overview-max-chunks-per-document: ${OVERVIEW_MAX_CHUNKS_PER_DOCUMENT:10}
+  overview-excerpt-words: ${OVERVIEW_EXCERPT_WORDS:160}
+  overview-max-documents: ${OVERVIEW_MAX_DOCUMENTS:5}
+  enable-overview-fallback: ${ENABLE_OVERVIEW_FALLBACK:true}
+
+  http-timeout-seconds: ${HTTP_TIMEOUT_SECONDS:30.0}
