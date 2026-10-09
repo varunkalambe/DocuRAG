@@ -1,5 +1,5 @@
 // Paste your Render URL here. It must end with /api.
-const PRODUCTION_API_URL = 'https://pdf-rag-springboot.onrender.com/api';
+const PRODUCTION_API_URL = 'https://pdf-rag-backend-5coa.onrender.com/api';
 
 const isLocalHost =
   typeof window !== 'undefined' &&
