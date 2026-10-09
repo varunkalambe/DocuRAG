@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /** All runtime settings. Values come from environment variables / .env via application.yml. */
@@ -64,8 +65,8 @@ public record AppProperties(
 
     public void validate() {
         String provider = embeddingProvider == null ? "" : embeddingProvider.strip().toLowerCase();
-        if (!provider.equals("huggingface") && !provider.equals("local")) {
-            throw new IllegalStateException("EMBEDDING_PROVIDER must be 'huggingface' or 'local'.");
+        if (!provider.equals("huggingface") && !provider.equals("local") && !provider.equals("gemini")) {
+            throw new IllegalStateException("EMBEDDING_PROVIDER must be 'huggingface', 'local' or 'gemini'.");
         }
 
         requireText("GROQ_API_KEY", groqApiKey);

@@ -14,7 +14,6 @@ public class EmbeddingConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger("pdf_rag.embeddings.factory");
 
-    /** Process-wide embedder (the local ONNX model must be loaded only once). */
     @Bean
     public EmbeddingProvider embeddingProvider(AppProperties props) {
         String provider = props.embeddingProvider().strip().toLowerCase();
@@ -22,6 +21,8 @@ public class EmbeddingConfig {
 
         if (provider.equals("local")) {
             embedder = new LocalEmbeddingAdapter(props.localEmbeddingBatchSize());
+        } else if (provider.equals("gemini")) {
+            embedder = new GeminiEmbeddingAdapter();
         } else {
             HuggingFaceEmbeddingAdapter primary = new HuggingFaceEmbeddingAdapter(props);
             if (props.embeddingFallbackToLocal()) {
@@ -39,7 +40,6 @@ public class EmbeddingConfig {
         return embedder;
     }
 
-    /** Loads the local model in the background right after start-up (only when it is the main provider). */
     @Bean
     public ModelWarmup modelWarmup(EmbeddingProvider embeddingProvider) {
         return new ModelWarmup(embeddingProvider);
