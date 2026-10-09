@@ -6,3 +6,7 @@ frontend/dist/
 frontend/.angular/
 *.log
 project_code_dump.txt
+.idea/
+frontend/.vscode/
+combined_codebase.txt
+c.py
